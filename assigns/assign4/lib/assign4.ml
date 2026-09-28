@@ -37,6 +37,9 @@ let dist (dirs : dir list) : float =
   in loop dirs 0 0
 
 
+
+
+
     type int_or_string
   = Int of int
   | String of string
@@ -45,9 +48,23 @@ type int_list_or_string_list
   = Int_list of int list
   | String_list of string list
 
+
+(* found info on algabreic data types in the textbook because we didnt get to it last thursday*)
 let convert (l : int_or_string list) : int_list_or_string_list list =
-  let _ = l in
-  assert false
+  let rec loop (l : int_or_string list) (ints: int list) (strings: string list) (rtn_list: int_list_or_string_list list) =
+    match l with
+    | [] -> List.rev (String_list (List.rev strings) :: Int_list (List.rev ints) :: rtn_list) (* just tack on the left overs at end*)
+    | Int i :: t when (strings = []) -> loop t (i :: ints) strings rtn_list
+    | Int i :: t -> loop t (i :: ints) [] (String_list (List.rev strings) :: rtn_list)
+    | String s :: t when (ints = []) -> loop t ints (s :: strings) rtn_list
+    | String s :: t -> loop t [] (s :: strings) (Int_list (List.rev ints) :: rtn_list)
+  in loop l [] [] []
+
+
+
+
+
+
 
 type 'a tree
   = Empty
