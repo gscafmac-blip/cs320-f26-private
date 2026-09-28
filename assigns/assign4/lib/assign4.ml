@@ -27,10 +27,17 @@ let split_by_ws (s : string) : string list =
 type dir = N | S | E | W
 
 let dist (dirs : dir list) : float =
-  let _ = dirs in
-  assert false
+  let rec loop (dirs: dir list) (horizontal: int) (vertical: int) =
+    match dirs with
+    | [] -> sqrt (float_of_int (horizontal * horizontal + vertical * vertical))
+    | N :: t -> loop t horizontal (vertical + 1)
+    | S :: t -> loop t horizontal (vertical - 1)
+    | E :: t -> loop t (horizontal + 1) vertical
+    | W :: t -> loop t (horizontal - 1) vertical
+  in loop dirs 0 0
 
-type int_or_string
+
+    type int_or_string
   = Int of int
   | String of string
 
