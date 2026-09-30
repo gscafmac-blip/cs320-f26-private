@@ -86,8 +86,11 @@ let rec flatten (t : 'a tree) : 'a list =
   | Node (a, left, right) -> loop left (a :: loop right acc) (* here we know everything on right will be greater than
   anything down left, so we cons a on and work on left after we have3 gone all the way down the right*)
  in loop t []
- 
+
 
 let rec sort (l : 'a list) : 'a list =
-  let _ = l in
-  assert false
+  let rec loop l (tree : 'a tree) = 
+    match l with
+    | [] -> flatten tree
+    | h :: t -> loop t (insert h tree)
+  in loop l Empty
