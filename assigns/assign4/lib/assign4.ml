@@ -65,18 +65,28 @@ let convert (l : int_or_string list) : int_list_or_string_list list =
 
 
 
-
 type 'a tree
   = Empty
   | Node of 'a * 'a tree * 'a tree
 
 let rec insert (x : 'a) (t : 'a tree) : 'a tree =
-  let _ = x, t in
-  assert false
+  let rec loop (x: 'a) (t: 'a tree) =
+    match t with
+    | Empty -> Node (x, Empty, Empty)
+    | Node (a, left, right) when (x <= a) -> Node (a, loop x left, right)
+    | Node (a, left, right) -> Node (a, left, loop x right)
+  in loop x t
+(* this way we just pass nodes there old selves, but hand off the x till it fits in,,
+I am way too lazy this week to do tail recursive...*)
 
 let rec flatten (t : 'a tree) : 'a list =
-  let _ = t in
-  assert false
+ let rec loop t (acc: 'a list) =
+  match t with
+  | Empty -> acc
+  | Node (a, left, right) -> loop left (a :: loop right acc) (* here we know everything on right will be greater than
+  anything down left, so we cons a on and work on left after we have3 gone all the way down the right*)
+ in loop t []
+ 
 
 let rec sort (l : 'a list) : 'a list =
   let _ = l in
