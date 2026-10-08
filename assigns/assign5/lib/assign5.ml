@@ -95,6 +95,7 @@ let rec is_valid g path =
 let last path = 
   match List.rev path with
   | h :: _ -> h
+  | _ -> failwith "no path"
 
 let walks (f : 'a -> 'a -> bool) (n : int) (ps : (('a -> 'a) * 'a) list) : 'a list =
   ps |> List.map (fun k -> create_path k n) |> List.filter (is_valid f) |> List.map last
