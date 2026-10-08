@@ -35,14 +35,25 @@ let group (l : int list) : int list list option =
   in
   loop l First [] []
         
-
   
 
 type 'a rtree = Node of 'a * 'a rtree list
 
-let split (t : ('a * 'b) rtree) : 'a rtree * 'b rtree =
-  let _ = t in
-  assert false
+let rec unzip l =
+  match l with
+  | [] -> ([], [])
+  | (a, b) :: rest ->
+    let aas, bbs = unzip rest in
+    (a :: aas, b :: bbs)
+
+let rec split (t : ('a * 'b) rtree) : 'a rtree * 'b rtree =
+  match t with
+  | Node ((a, b), []) -> (Node (a, []), Node (b, []))
+  | Node ((a, b), children) ->
+    let lefts, rights = unzip (List.map split children) in (* list.split goes through the list of children left and 
+    right trees we have created*)
+    (Node (a, lefts), Node(b, rights))
+
 
 let prefix_map (f : 'a list -> 'b option) (l : 'a list) : ('b * 'a list) option =
   let _ = f, l in
