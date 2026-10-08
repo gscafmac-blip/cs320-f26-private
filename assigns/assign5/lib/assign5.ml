@@ -1,0 +1,57 @@
+type switch =
+  | Pos_zero
+  | Neg_zero
+  | Pos
+  | Neg
+  | First
+
+(* switch: state of the last element read *)
+let group (l : int list) : int list list option =
+  let rec loop l switch temp acc =
+    match l with
+    | [] -> begin
+        match switch with
+        | Pos | Neg -> Some (List.rev (List.rev temp :: acc))
+        | First | Pos_zero | Neg_zero -> None (* empty list or end in 0*)
+      end
+    | 0 :: t -> begin
+        match switch with
+        | Pos -> loop t Pos_zero [] (List.rev temp :: acc)
+        | Neg -> loop t Neg_zero [] (List.rev temp :: acc)
+        | First | Pos_zero | Neg_zero -> None   (* leading or 0 in row*)
+      end
+    | i :: t when i < 0 -> begin
+        match switch with
+        | Neg -> loop t Neg (i :: temp) acc
+        | First | Pos_zero -> loop t Neg [i] acc
+        | Pos | Neg_zero -> None   (* sign change or 0 between same signs *)
+      end
+    | i :: t -> begin
+        match switch with
+        | Pos -> loop t Pos (i :: temp) acc
+        | First | Neg_zero -> loop t Pos [i] acc
+        | Neg | Pos_zero -> None
+      end
+  in
+  loop l First [] []
+        
+
+  
+
+type 'a rtree = Node of 'a * 'a rtree list
+
+let split (t : ('a * 'b) rtree) : 'a rtree * 'b rtree =
+  let _ = t in
+  assert false
+
+let prefix_map (f : 'a list -> 'b option) (l : 'a list) : ('b * 'a list) option =
+  let _ = f, l in
+  assert false
+
+let apply_cycle (f : ('a -> 'a) list) (n : int) (x : 'a) : 'a =
+  let _ = f, n, x in
+  assert false
+
+let walks (f : 'a -> 'a -> bool) (n : int) (ps : (('a -> 'a) * 'a) list) : 'a list =
+  let _ = f, n, ps in
+  assert false
