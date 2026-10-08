@@ -78,6 +78,23 @@ let apply_cycle (f : ('a -> 'a) list) (n : int) (x : 'a) : 'a =
   in  
   loop f n x
 
+
+
+let create_path (p, x) times =
+  let rec loop times last acc =
+    if (times = 0) then List.rev acc
+    else loop (times - 1) (p last) (p last :: acc)
+  in loop times x [x]
+
+let rec is_valid g path =
+  match path with
+  | [] -> true
+  | i :: [] -> true
+  | i :: j :: t -> if (g i j) then is_valid g (j :: t) else false
+
+let last path = 
+  match List.rev path with
+  | h :: _ -> h
+
 let walks (f : 'a -> 'a -> bool) (n : int) (ps : (('a -> 'a) * 'a) list) : 'a list =
-  let _ = f, n, ps in
-  assert false
+  ps |> List.map (fun k -> create_path k n) |> List.filter (is_valid f) |> List.map last
