@@ -48,15 +48,10 @@ let rec unzip l =
 
 let rec split (t : ('a * 'b) rtree) : 'a rtree * 'b rtree =
   match t with
-  | Node ((a, b), []) -> (Node (a, []), Node (b, []))
   | Node ((a, b), children) ->
     let lefts, rights = unzip (List.map split children) in (* list.split goes through the list of children left and 
     right trees we have created*)
     (Node (a, lefts), Node(b, rights))
-
-
-
-
 
 
 let prefix_map (f : 'a list -> 'b option) (l : 'a list) : ('b * 'a list) option =
@@ -71,10 +66,17 @@ let prefix_map (f : 'a list -> 'b option) (l : 'a list) : ('b * 'a list) option 
   in
   loop l []
 
+  
 
 let apply_cycle (f : ('a -> 'a) list) (n : int) (x : 'a) : 'a =
-  let _ = f, n, x in
-  assert false
+  let rec loop funcs n x =
+    if (not (n = 0)) then
+      match funcs with
+      | h :: rest -> loop rest (n-1) (h x)
+      | [] -> loop f n x
+    else x
+  in  
+  loop f n x
 
 let walks (f : 'a -> 'a -> bool) (n : int) (ps : (('a -> 'a) * 'a) list) : 'a list =
   let _ = f, n, ps in
