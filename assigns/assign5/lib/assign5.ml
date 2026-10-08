@@ -55,9 +55,22 @@ let rec split (t : ('a * 'b) rtree) : 'a rtree * 'b rtree =
     (Node (a, lefts), Node(b, rights))
 
 
+
+
+
+
 let prefix_map (f : 'a list -> 'b option) (l : 'a list) : ('b * 'a list) option =
-  let _ = f, l in
-  assert false
+  let rec loop l pre =
+    match (f (List.rev pre)) with
+    | None -> begin
+      match l with 
+      | [] -> None
+      | h :: t -> loop t (h :: pre)
+    end
+    | Some b -> Some (b, l)
+  in
+  loop l []
+
 
 let apply_cycle (f : ('a -> 'a) list) (n : int) (x : 'a) : 'a =
   let _ = f, n, x in
