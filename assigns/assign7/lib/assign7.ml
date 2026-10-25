@@ -1,4 +1,4 @@
-open Utils
+(*open Utils*)
 
 module Sexpr = Sexpr
 
@@ -73,6 +73,8 @@ let rec free_vars e =
       | Var a -> if (String.equal a y) then v else Var a
 
 
+end
+
   let rec equal (e1 : t) (e2 : t) : bool = 
     match (e1, e2) with
     | Var a, Var b -> String.equal a b
@@ -80,8 +82,32 @@ let rec free_vars e =
     | Fun(x1, body1), Fun(x2, body2) -> equal body1 (subst (Var x1) x2 body2)
     | _ -> false
 
-end
-let step e = ignore e; assert false
+
+
+let rec step e : Expr.t option=
+  match e with
+  | Expr.App(x, y) -> begin
+    match x with
+    | Expr.Fun(var, body) -> Some (Expr.subst body var y) (* beta*)
+    | _ -> begin
+      match step x with
+      | Some x' -> Some (Expr.App(x', y)) (* appleft*)
+      | _ -> begin
+        match step y with
+        | Some y' -> Some (Expr.App(x, y')) (* apprightt*)
+        | _ -> None
+      end
+    end
+  end
+
+  | Expr.Fun (x, body) -> begin
+    match step body with
+    | Some body' -> Expr.Fun (x, body')
+    | _ -> None
+  end
+  | _ -> None
+
+
 
 
 let multistep =
