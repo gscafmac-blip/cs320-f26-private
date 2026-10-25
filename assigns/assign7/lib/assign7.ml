@@ -17,7 +17,26 @@ module Expr = struct
 
   let ( let* ) = Option.bind
 
-  let of_sexpr_opt se = ignore se; assert false
+  let rec of_sexpr_opt (se: Sexpr.t) : t option =
+    let rec go se =
+      match se with
+      | Sexpr.Atom a -> Some (Var a)
+      | Sexpr.List l -> begin
+        match l with
+        | [Sexpr.Atom "lambda"; Sexpr.Atom x; body] -> begin
+          match go body with
+          | Some e -> Some (Fun (x, e))
+          | None -> None
+        end
+        (*application case*)
+        | [f; x] -> begin
+          match ((go f), (go x)) with
+          | (Some f_p, Some x_p) -> Some (App (f_p, x_p))
+          | _ -> None
+        end
+      | _ -> None
+      end
+      in go se
 
   let of_string_opt s =
     let* se = Sexpr.of_string_opt s in
@@ -32,11 +51,32 @@ module Expr = struct
     | Fun (x, e) -> VarSet.remove x (fv e)
     | App (e1, e2) -> VarSet.union (fv e1) (fv e2)
     | Var x -> VarSet.singleton x
+  
+let rec free_vars e =
+  match e with
+  | Var a -> [a]
+  | App (a, b) -> (free_vars a) @ (free_vars b)
+  | Fun (x, e) -> List.filter (fun v -> not (String.equal v x)) (free_vars e) (* go through and grab non bound vals*)
+  
+  let rec subst v y e =
+      match e with
+      | Fun (x, e) -> begin
+        if (String.equal x y) then Fun (x, e)
 
-  let subst e' x e = ignore (e', x, e); assert false
-  let equal e1 e2 = ignore (e1, e2); assert false
+        else if (List.mem x (free_vars v)) (* x is a free variable of v, i looked up best dict alternative in ocaml*) then
+        let z = Utils.gensym() in
+        let e_renamed = subst (Var z) x e in
+        Fun (z, subst v y e_renamed) else 
+        Fun (x, subst v y e)
+      end
+      | App (a, b) -> App ((subst v y a), (subst v y b))
+      | Var a -> if (String.equal a y) then v else Var a
 end
-
+(*
+  let equal (e1 : t) (e2 : t) = 
+    let rec go e1 e2 =
+      match (e1, e2) with
+*)
 let step e = ignore e; assert false
 
 let multistep =
@@ -45,7 +85,7 @@ let multistep =
     | Some e -> go e
     | None -> e
   in go
-
+(*
 let interp s =
   match Expr.of_string_opt s with
   | None -> print_endline "parse error"
@@ -64,3 +104,4 @@ let int_of_expr e =
 
 let suc : Expr.t = Expr.Var "x" (* TODO *)
 let add : Expr.t = Expr.Var "x" (* TODO *)
+*)
