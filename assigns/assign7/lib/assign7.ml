@@ -71,13 +71,18 @@ let rec free_vars e =
       end
       | App (a, b) -> App ((subst v y a), (subst v y b))
       | Var a -> if (String.equal a y) then v else Var a
+
+
+  let rec equal (e1 : t) (e2 : t) : bool = 
+    match (e1, e2) with
+    | Var a, Var b -> String.equal a b
+    | App(a, b), App(c, d) -> equal a c && equal b d
+    | Fun(x1, body1), Fun(x2, body2) -> equal body1 (subst (Var x1) x2 body2)
+    | _ -> false
+
 end
-(*
-  let equal (e1 : t) (e2 : t) = 
-    let rec go e1 e2 =
-      match (e1, e2) with
-*)
 let step e = ignore e; assert false
+
 
 let multistep =
   let rec go e =
