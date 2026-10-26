@@ -116,7 +116,7 @@ let multistep =
     | Some e -> go e
     | None -> e
   in go
-(*
+
 let interp s =
   match Expr.of_string_opt s with
   | None -> print_endline "parse error"
@@ -124,8 +124,15 @@ let interp s =
      match multistep e with
      | e -> e |> Expr.to_string |> print_endline
 
-let expr_of_int n = ignore n; assert false
-
+let expr_of_int n =
+  let f e = Expr.Fun ("f", Expr.Fun ("x", e)) in
+  let rec go acc n =
+    if n > 0 then 
+      go (Expr.App (Expr.Var "f", acc)) (n - 1)
+    else acc
+  in
+  f (go (Expr.Var "x") n)
+ 
 let int_of_expr_opt e = ignore e; assert false
 
 let int_of_expr e =
@@ -135,4 +142,3 @@ let int_of_expr e =
 
 let suc : Expr.t = Expr.Var "x" (* TODO *)
 let add : Expr.t = Expr.Var "x" (* TODO *)
-*)
