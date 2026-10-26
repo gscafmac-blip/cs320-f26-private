@@ -102,7 +102,7 @@ let rec step e : Expr.t option=
 
   | Expr.Fun (x, body) -> begin
     match step body with
-    | Some body' -> Expr.Fun (x, body')
+    | Some body' -> Some (Expr.Fun (x, body'))
     | _ -> None
   end
   | _ -> None
