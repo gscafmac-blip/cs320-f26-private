@@ -1,5 +1,7 @@
 (*open Utils*)
 
+module VarSet = Set.Make(String)
+
 module Sexpr = Sexpr
 
 module Expr = struct
@@ -139,7 +141,7 @@ let int_of_expr_opt e =
     let rec count acc a =
       match a with
       | Expr.Var y when (String.equal x y) -> Some acc
-      | Expr.App (g, next) when (String.equal g f) ->
+      | Expr.App (Expr.Var g, next) when (String.equal g f) ->
         count (acc + 1) next
       | _ -> None
       in count 0 body
@@ -150,5 +152,15 @@ let int_of_expr e =
   | Some n -> n
   | None -> raise (Failure "int_of_expr")
 
-let suc : Expr.t = Expr.Var "x" (* TODO *)
-let add : Expr.t = Expr.Var "x" (* TODO *)
+let suc : Expr.t = 
+  Expr.Fun ("n", (* the church numeral *)
+  Expr.Fun ("f", Expr.Fun ("x", (* on this line im thinking about it as supplying the params so we can apply f to the body of n on the next line*)
+  Expr.App (Expr.Var "f", Expr.App (Expr.App (Expr.Var "n", Expr.Var "f"), Expr.Var "x")))))
+
+
+let add : Expr.t = 
+  Expr.Fun ("n", (* the church numeral *)
+  Expr.Fun ("m", (* second number *)
+  Expr.Fun ("f", Expr.Fun ("x", 
+  Expr.App (Expr.App (Expr.Var "m", Expr.Var "f"),
+            Expr.App (Expr.App (Expr.Var "n", Expr.Var "f"), Expr.Var "x"))))))
