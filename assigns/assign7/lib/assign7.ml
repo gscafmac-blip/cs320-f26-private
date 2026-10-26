@@ -73,7 +73,6 @@ let rec free_vars e =
       | Var a -> if (String.equal a y) then v else Var a
 
 
-end
 
   let rec equal (e1 : t) (e2 : t) : bool = 
     match (e1, e2) with
@@ -82,6 +81,7 @@ end
     | Fun(x1, body1), Fun(x2, body2) -> equal body1 (subst (Var x1) x2 body2)
     | _ -> false
 
+end
 
 
 let rec step e : Expr.t option=
@@ -133,7 +133,17 @@ let expr_of_int n =
   in
   f (go (Expr.Var "x") n)
  
-let int_of_expr_opt e = ignore e; assert false
+let int_of_expr_opt e =
+  match e with
+  | Expr.Fun (f, Expr.Fun (x, body)) -> 
+    let rec count acc a =
+      match a with
+      | Expr.Var y when (String.equal x y) -> Some acc
+      | Expr.App (g, next) when (String.equal g f) ->
+        count (acc + 1) next
+      | _ -> None
+      in count 0 body
+  | _ -> None
 
 let int_of_expr e =
   match int_of_expr_opt e with
