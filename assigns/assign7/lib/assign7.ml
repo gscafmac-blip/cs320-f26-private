@@ -90,7 +90,7 @@ let rec step e : Expr.t option=
   match e with
   | Expr.App(x, y) -> begin
     match x with
-    | Expr.Fun(var, body) -> Some (Expr.subst body var y) (* beta*)
+    | Expr.Fun(var, body) -> Some (Expr.subst y var body) (* beta*)
     | _ -> begin
       match step x with
       | Some x' -> Some (Expr.App(x', y)) (* appleft*)
