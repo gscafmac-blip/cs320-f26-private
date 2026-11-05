@@ -68,14 +68,12 @@ module Expr = struct
             | None -> None
           end
 
-        (* (rec_nat e0 e1 e2) -- adjust to your argument order *)
         | [Sexpr.Atom "rec-Nat"; a; b; c] -> begin
             match go a, go b, go c with
             | Some a', Some b', Some c' -> Some (Rec_nat (a', b', c'))
             | _ -> None
           end
 
-        (* application: (f x) *)
         | [f; x] -> begin
             match go f, go x with
             | Some f', Some x' -> Some (App (f', x'))
@@ -97,6 +95,22 @@ module Expr = struct
     | Error _ -> raise (Failure "Expr.of_string")
 
   let subst (e' : t) (x : string) (e : t) : t = ignore (e', x, e); assert false (* TODO *)
+
+    let rec subst v y e =
+      match e with
+      | Fun (x, ty, body) -> 
+        if String.equal x y then e
+        else Fun (x, ty, subst v y body)
+      | App (a, b) -> App ((subst v y a), (subst v y b))
+      | Var a -> if (String.equal a y) then v else e
+      | Zero -> Zero
+      | Succ a -> Succ (subst v y a)
+      | Let (x, e1, e2) -> begin
+        let e1' = subst v y e1 in
+        if String.equal x y then Let (x, e1', e2)
+        else Let (x, e1', subst v y e2)
+      end
+      | Rec_nat (a, b, c ) -> Rec_nat (subst v y a, subst v y b, subst v y c)
 end
 
 module Ctxt = struct
@@ -123,11 +137,75 @@ module Ctxt = struct
   let add : string -> Type.t -> t -> t = M.add
 end
 
-let rec type_of (gamma: Ctxt.t) (e : Expr.t) : (Type.t, string) result =
-  ignore (gamma, e); assert false (* TODO *)
+let ( let* ) = Result.bind
+
+let rec type_of (gamma : Ctxt.t) (e : Expr.t) : (Type.t, string) result =
+  match e with
+  | Expr.Var x -> begin
+      match Ctxt.find_opt x gamma with
+      | Some ty -> Ok ty
+      | None -> Error (Printf.sprintf "Type of %s not in context" x)
+    end
+
+  | Expr.Fun (x, ty, body) ->
+      let* ty' = type_of (Ctxt.add x ty gamma) body in
+      Ok (Type.Arr (ty, ty'))
+
+  | Expr.App (e1, e2) -> begin
+      let* t1 = type_of gamma e1 in
+      let* t2 = type_of gamma e2 in
+      match t1 with
+      | Type.Arr (dom, cod) when dom = t2 -> Ok cod
+      | _ -> Error "bad app"
+    end
+
+  | Expr.Let (x, e1, e2) ->
+      let* t1 = type_of gamma e1 in
+      type_of (Ctxt.add x t1 gamma) e2
+
+  | Expr.Zero -> Ok Type.Nat
+
+  | Expr.Succ e' -> begin
+      let* t = type_of gamma e' in
+      match t with
+      | Type.Nat -> Ok Type.Nat
+      | _ -> Error "add1 needs Nat expr"
+    end
+
+  | Expr.Rec_nat (n, base, step) -> begin
+      let* tn = type_of gamma n in
+      let* tb = type_of gamma base in
+      let* ts = type_of gamma step in
+      if tn <> Type.Nat then Error "type of first arg must be nat"
+      else if ts <> Type.Arr (Type.Nat, Type.Arr (tb, tb)) then
+        Error "wrong arr type"
+      else Ok tb
+    end
 
 let rec eval (e : Expr.t) : Expr.t =
-  ignore e; assert false (* TODO *)
+  match e with
+  | Expr.Var x -> failwith ("unbound variable" ^ x)
+
+  | Expr.Fun _ 
+  | Expr.Zero -> e
+
+  | Expr.Succ e' -> Expr.Succ (eval e')
+
+  | Expr.App (e1, e2) -> begin
+      match eval e1 with
+      | Expr.Fun (x, _, body) -> eval (Expr.subst (eval e2) x body)
+      | _ -> failwith "applying non-function"
+    end
+
+  | Expr.Let (x, e1, e2) -> eval (Expr.subst (eval e1) x e2)
+
+  | Expr.Rec_nat (n, base, step) -> begin
+      match eval n with
+      | Expr.Zero -> eval base
+      | Expr.Succ m ->
+          eval (Expr.App (Expr.App (step, m), Expr.Rec_nat (m, base, step)))
+      | _ -> failwith "rec-Nat first arg needs to be num"
+    end
 
 let string_of_value e =
   let rec int_of_value_opt : Expr.t -> int option = function
