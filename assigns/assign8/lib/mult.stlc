@@ -1,0 +1,11 @@
+(let add
+  (lambda m Nat
+    (lambda n Nat
+      (let step (lambda p Nat (lambda x Nat (add1 x)))
+        (rec-Nat m n step))))
+  (let multiply
+    (lambda m Nat
+      (lambda n Nat
+        (let step (lambda p Nat (lambda x Nat ((add n) x)))
+          (rec-Nat m 0 step))))
+    ((multiply 5) 2)))
