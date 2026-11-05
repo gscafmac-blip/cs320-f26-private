@@ -94,23 +94,22 @@ module Expr = struct
     | Ok e -> e
     | Error _ -> raise (Failure "Expr.of_string")
 
-  let subst (e' : t) (x : string) (e : t) : t = ignore (e', x, e); assert false (* TODO *)
-
-    let rec subst v y e =
-      match e with
-      | Fun (x, ty, body) -> 
-        if String.equal x y then e
-        else Fun (x, ty, subst v y body)
-      | App (a, b) -> App ((subst v y a), (subst v y b))
-      | Var a -> if (String.equal a y) then v else e
-      | Zero -> Zero
-      | Succ a -> Succ (subst v y a)
-      | Let (x, e1, e2) -> begin
-        let e1' = subst v y e1 in
-        if String.equal x y then Let (x, e1', e2)
-        else Let (x, e1', subst v y e2)
-      end
-      | Rec_nat (a, b, c ) -> Rec_nat (subst v y a, subst v y b, subst v y c)
+  (* i copied the template from ass7, thats why the inputs are off, its not cause of ai*)
+  let rec subst v y e =
+    match e with
+    | Fun (x, ty, body) -> 
+      if String.equal x y then e
+      else Fun (x, ty, subst v y body)
+    | App (a, b) -> App ((subst v y a), (subst v y b))
+    | Var a -> if (String.equal a y) then v else e
+    | Zero -> Zero
+    | Succ a -> Succ (subst v y a)
+    | Let (x, e1, e2) -> begin
+      let e1' = subst v y e1 in
+      if String.equal x y then Let (x, e1', e2)
+      else Let (x, e1', subst v y e2)
+    end
+    | Rec_nat (a, b, c ) -> Rec_nat (subst v y a, subst v y b, subst v y c)
 end
 
 module Ctxt = struct
