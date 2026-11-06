@@ -1,4 +1,6 @@
+
 open Utils
+open Sexpr
 
 module Type = struct
   type t =
@@ -86,6 +88,7 @@ module Expr = struct
 
   let of_string_res s =
     match Sexpr.of_string_opt s with
+    (* i found that i could send a message if this is none on a forum *)
     | Some se -> Option.to_result ~none:"syntax error" (of_sexpr_opt se)
     | None -> Error "syntax error"
 
@@ -220,6 +223,19 @@ let string_of_value e =
   match int_of_value_opt e with
   | Some n -> string_of_int n
   | None -> "<fun>"
+
+(* here is my multiply example :: it did infact give me 10 when i ran it!!
+"(let add
+      (lambda m Nat
+        (lambda n Nat
+          (let step (lambda p Nat (lambda x Nat (add1 x)))
+            (rec-Nat m n step))))
+      (let multiply
+        (lambda m Nat
+          (lambda n Nat
+            (let step (lambda p Nat (lambda x Nat ((add n) x)))
+              (rec-Nat m 0 step))))
+        ((multiply 5) 2)))"*)
 
 let interp (s : string) : unit =
   match Expr.of_string_res s with
