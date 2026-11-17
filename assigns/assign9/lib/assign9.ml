@@ -268,7 +268,9 @@ let rec type_of ctxt (e : Expr.t) : (Type.t, Ty_error.t) result =
      let* ty' = type_of ctxt es in
      let* _ = expected_ty (List ty) ty' in
      Ok (Type.List ty)
-  | Fun (x, in_ty, e) -> assert false (* TODO *)
+  | Fun (x, in_ty, e) ->
+    let* out_ty = type_of (Ctxt.add x in_ty ctxt) e in 
+    Ok (Type.Fun (in_ty, out_ty))
   | App (e1, e2) ->
      let* e1_ty = type_of ctxt e1 in
      let* in_ty, out_ty = is_fun e1_ty in
@@ -282,9 +284,51 @@ let rec type_of ctxt (e : Expr.t) : (Type.t, Ty_error.t) result =
      let* e3_ty = type_of ctxt e3 in
      let* _ = expected_ty e2_ty e3_ty in
      Ok e3_ty
-  | Bop (op, e1, e2) -> assert false (* TODO *)
-  | Let (x, ty, e1, e2) -> assert false (* TODO *)
-  | Match (e, arms) -> assert false (* TODO *)
+     (* not sure if this was the cleanest way to do this, 
+      hopefully it works*)
+  | Bop (op, e1, e2) -> begin
+    match (type_of ctxt e1), (type_of ctxt e2) with
+    | Ok Type.Int, Ok Type.Int -> Ok Type.Int
+    | _, Error y -> Error y
+    | Error x, _ -> Error x
+    (* this case is only hit if y is not an error, 
+      the case where both are wrong is included here too*)
+    | Ok x, _ -> Error (Ty_error.Wrong_type (Int, x))
+    (* not sure why this case is not used... but i put it anyways
+    | _, Ok y -> Error (Ty_error.Wrong_type (Int, y))*)
+  end
+  | Let (x, ty, e1, e2) -> begin
+    let ctxt1 =
+      match e1 with
+      | Fun _ -> Ctxt.add x ty ctxt (* if we have a function as our e1, 
+        to find its type we must pass it the type of x too *)
+      | _ -> ctxt
+in
+    let* ty1 = type_of ctxt1 e1 in
+    let* ty2 = type_of (Ctxt.add x ty ctxt) e2 in
+    if (ty1 = ty) then Ok ty2
+    else Error (Ty_error.Wrong_type (ty, ty1))
+  end
+  | Match (e0, arms) -> begin
+    let* ty0 = type_of ctxt e0 in
+     let type_of_arm (p, e) = 
+      let* c = type_pat p ty0 in
+      type_of (Ctxt.merge ctxt c) e
+     in
+    match arms with
+    | [] -> Error (Ty_error.Wrong_type (List Int, List Int)) (* stand in error for empty arms*)
+    | first :: rest ->
+      let* ty = type_of_arm first in
+      let rec check arms =
+        match arms with
+        | [] -> Ok ty (*we made it to end without errors*)
+        | arm :: rest ->
+          let* t = type_of_arm arm in
+          if t = ty then check rest
+          else Error (Ty_error.Wrong_type (ty, t))
+        in
+        check rest
+  end
 
 module Value = struct
   type t =
