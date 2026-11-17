@@ -286,17 +286,15 @@ let rec type_of ctxt (e : Expr.t) : (Type.t, Ty_error.t) result =
      Ok e3_ty
      (* not sure if this was the cleanest way to do this, 
       hopefully it works*)
-  | Bop (op, e1, e2) -> begin
-    match (type_of ctxt e1), (type_of ctxt e2) with
-    | Ok Type.Int, Ok Type.Int -> Ok Type.Int
-    | _, Error y -> Error y
-    | Error x, _ -> Error x
-    (* this case is only hit if y is not an error, 
-      the case where both are wrong is included here too*)
-    | Ok x, _ -> Error (Ty_error.Wrong_type (Int, x))
-    (* not sure why this case is not used... but i put it anyways
-    | _, Ok y -> Error (Ty_error.Wrong_type (Int, y))*)
-  end
+  | Bop (op, e1, e2) ->
+    let* ty1 = type_of ctxt e1 in
+    let* _ = expected_ty Int ty1 in
+    let* ty2 = type_of ctxt e2 in
+    let* _ = expected_ty Int ty2 in
+    begin match op with
+    | Bop.Add | Bop.Sub | Bop.Mul -> Ok Type.Int
+    | Bop.Eq | Bop.Neq | Bop.Lt | Bop.Lte | Bop.Gt | Bop.Gte -> Ok Type.Bool
+   end
   | Let (x, ty, e1, e2) -> begin
     let ctxt1 =
       match e1 with
