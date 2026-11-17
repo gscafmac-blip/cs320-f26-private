@@ -406,8 +406,31 @@ let rec eval (env : Env.t) (e : Expr.t) : Value.t =
      eval (Env.add f (Value.Clos (env, x, e1, Some f)) env) e2
   | Let (x, _, e1, e2) ->
      eval (Env.add x (eval env e1) env) e2
-  | Bop (op, e1, e2) -> assert false (* TODO *)
-  | App (e1, e2) -> assert false (* TODO *)
+  | Bop (op, e1, e2) -> begin
+    match eval env e1, eval env e2 with
+    | Int x, Int y -> begin
+    match op with
+    | Add -> Int (x + y)
+    | Sub -> Int (x - y)
+    | Mul -> Int (x * y)
+    | Eq -> Bool (x = y)
+    | Neq -> Bool (x != y)
+    | Lt -> Bool (x < y)
+    | Lte -> Bool (x <= y)
+    | Gt -> Bool (x > y)
+    | Gte -> Bool (x >= y)
+    end
+    | _ -> assert false (* we'll never get here*)
+  end
+  | App (e1, e2) -> begin
+    match eval env e1, eval env e2 with
+    (*non rec case*)
+    | (Clos (env', x, e, None)), v2 -> eval (Env.add x v2 env') e
+    (*rec case*)
+    | (Clos (env', x, e, Some x'), v2) -> eval (Env.add x' (Clos (env', x, e, Some x')) (Env.add x v2 env')) e
+    | _ -> assert false
+
+  end
   | Match (e, arms) ->
      let v = eval env e in
      let eval_arm (p, e) =
