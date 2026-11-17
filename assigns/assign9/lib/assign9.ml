@@ -364,7 +364,17 @@ end
 
 let rec matches (v : Value.t) (p : Pattern.t) : Env.t option =
   match v, p with
-  | _ -> None (* TODO *)
+  | Value.Int x, Pattern.Int y when x = y-> Some Env.empty
+  | Value.Bool x, Pattern.Bool y when x = y -> Some Env.empty
+  | x, Pattern.Var y -> Some (Env.add y x (Env.empty))
+  | Value.Nil, Pattern.Nil -> Some Env.empty
+  | Value.Cons (x, a), Pattern.Cons (y, b) -> begin
+    match (matches x y), (matches a b) with
+    | Some env1, Some env2 -> Some (Env.merge env1 env2)
+    | _ -> None
+  end
+  | x, Pattern.Wildcard -> Some Env.empty
+  | _, _ -> None
 
 exception Match_failure
 
