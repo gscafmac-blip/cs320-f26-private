@@ -247,7 +247,7 @@ let rec type_pat (p : Pattern.t) (ty : Type.t) : (Ctxt.t, Ty_error.t) result =
   | Bool _, ty -> Error (Wrong_type (Bool, ty))
   | Var x, ty -> Ok (Ctxt.singleton x ty)
   | Nil, List _ -> Ok Ctxt.empty (*??*)
-  | Nil, ty -> Ok Ctxt.empty (*????*)
+  | Nil, ty -> Error (Unexpected_list_pat ty)
   | Cons (p1, p2), List ty -> begin
     let* gamma1 = type_pat p1 ty in
     let* gamma2 = type_pat p2 (List ty) in
